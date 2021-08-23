@@ -67,6 +67,12 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/wavefrontreceiver v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/windowsperfcountersreceiver v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver v0.0.0-00010101000000-000000000000
+	github.com/pkg/errors v0.9.1
+	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/client_model v0.2.0
+	github.com/prometheus/common v0.24.0
+	github.com/prometheus/prometheus v1.8.2-0.20210430082741-2a4b8e12bbf2
+	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.7.1 // indirect
 	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/collector v0.26.0
