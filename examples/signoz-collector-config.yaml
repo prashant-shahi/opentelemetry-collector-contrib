@@ -23,6 +23,8 @@ processors:
     timeout: 2s
     override: false
   signozspanmetrics:
+    metrics_exporter: clickhousemetricswrite
+  signozspanmetrics/prometheus:
     metrics_exporter: prometheus
   batch:
     send_batch_size: 1000
@@ -59,7 +61,7 @@ service:
   pipelines:
     traces:
       receivers: [jaeger, otlp]
-      processors: [signozspanmetrics, batch]
+      processors: [signozspanmetrics, signozspanmetrics/prometheus, batch]
       exporters: [clickhouse]
     metrics:
       receivers: [otlp]

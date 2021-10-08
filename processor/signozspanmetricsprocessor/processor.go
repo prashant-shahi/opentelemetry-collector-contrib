@@ -402,14 +402,16 @@ func (p *processorImp) aggregateMetricsForSpan(serviceName string, span pdata.Sp
 	p.updateLatencyMetrics(key, latencyInMilliseconds, index)
 
 	spanAttr := span.Attributes()
+	_, externalCallPresent := spanAttr.Get("http.url")
 
-	if _, ok := spanAttr.Get("http.url"); ok {
-		externalCallKey := buildCustomKey(serviceName, span, p.dbCallDimensions)
+	if span.Kind() == 3 && externalCallPresent {
+		externalCallKey := buildCustomKey(serviceName, span, p.externalCallDimensions)
 		p.externalCallCache(serviceName, span, externalCallKey)
 		p.updateExternalCallLatencyMetrics(externalCallKey, latencyInMilliseconds, index)
 	}
 
-	if _, ok := spanAttr.Get("db.system"); ok {
+	_, dbCallPresent := spanAttr.Get("db.system")
+	if span.Kind() == 3 && dbCallPresent {
 		dbKey := buildCustomKey(serviceName, span, p.dbCallDimensions)
 		p.dbCache(serviceName, span, dbKey)
 		p.updateDBLatencyMetrics(dbKey, latencyInMilliseconds, index)
