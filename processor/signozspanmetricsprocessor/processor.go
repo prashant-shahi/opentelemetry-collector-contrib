@@ -38,6 +38,7 @@ const (
 	operationKey       = "operation" // is there a constant we can refer to?
 	spanKindKey        = tracetranslator.TagSpanKind
 	statusCodeKey      = tracetranslator.TagStatusCode
+	TagHTTPStatusCode  = tracetranslator.TagHTTPStatusCode
 	metricKeySeparator = string(byte(0))
 )
 
@@ -64,6 +65,7 @@ type processorImp struct {
 	nextConsumer    consumer.Traces
 
 	// Additional dimensions to add to metrics.
+	callDimensions         []Dimension
 	dimensions             []Dimension
 	dbCallDimensions       []Dimension
 	externalCallDimensions []Dimension
@@ -91,6 +93,7 @@ type processorImp struct {
 	// A cache of dimension key-value maps keyed by a unique identifier formed by a concatenation of its values:
 	// e.g. { "foo/barOK": { "serviceName": "foo", "operation": "/bar", "status_code": "OK" }}
 	metricKeyToDimensions             map[metricKey]dimKV
+	callMetricKeyToDimensions         map[metricKey]dimKV
 	dbMetricKeyToDimensions           map[metricKey]dimKV
 	externalCallMetricKeyToDimensions map[metricKey]dimKV
 }
@@ -114,17 +117,23 @@ func newProcessor(logger *zap.Logger, config config.Processor, nextConsumer cons
 	if err := validateDimensions(pConfig.Dimensions); err != nil {
 		return nil, err
 	}
-	defaultString := "NA"
+
+	callDimensions := []Dimension{
+		// {Name: operationKey},
+		// {Name: spanKindKey},
+		// {Name: statusCodeKey},
+		{Name: TagHTTPStatusCode},
+	}
 	dbCallDimensions := []Dimension{
-		{Name: "db.system", Default: &defaultString},
-		{Name: "db.name", Default: &defaultString},
-		{Name: "db.operation", Default: &defaultString},
+		{Name: "db.system"},
+		{Name: "db.name"},
+		{Name: "db.operation"},
 	}
 
 	externalCallDimensions := []Dimension{
-		{Name: "http.status_code", Default: &defaultString},
-		{Name: "http.url", Default: &defaultString},
-		{Name: "http.method", Default: &defaultString},
+		{Name: "http.status_code"},
+		{Name: "http.url"},
+		{Name: "http.method"},
 	}
 
 	return &processorImp{
@@ -144,8 +153,10 @@ func newProcessor(logger *zap.Logger, config config.Processor, nextConsumer cons
 		externalCallLatencyBucketCounts:   make(map[metricKey][]uint64),
 		nextConsumer:                      nextConsumer,
 		dimensions:                        pConfig.Dimensions,
+		callDimensions:                    callDimensions,
 		dbCallDimensions:                  dbCallDimensions,
 		externalCallDimensions:            externalCallDimensions,
+		callMetricKeyToDimensions:         make(map[metricKey]dimKV),
 		metricKeyToDimensions:             make(map[metricKey]dimKV),
 		dbMetricKeyToDimensions:           make(map[metricKey]dimKV),
 		externalCallMetricKeyToDimensions: make(map[metricKey]dimKV),
@@ -353,7 +364,7 @@ func (p *processorImp) collectCallMetrics(ilm pdata.InstrumentationLibraryMetric
 		dpCalls.SetTimestamp(pdata.TimestampFromTime(time.Now()))
 		dpCalls.SetValue(p.callSum[key])
 
-		dpCalls.LabelsMap().InitFromMap(p.metricKeyToDimensions[key])
+		dpCalls.LabelsMap().InitFromMap(p.callMetricKeyToDimensions[key])
 	}
 }
 
@@ -393,12 +404,14 @@ func (p *processorImp) aggregateMetricsForSpan(serviceName string, span pdata.Sp
 	// Binary search to find the latencyInMilliseconds bucket index.
 	index := sort.SearchFloat64s(p.latencyBounds, latencyInMilliseconds)
 
-	key := buildKey(serviceName, span, p.dimensions)
-
 	p.lock.Lock()
-	p.cache(serviceName, span, key)
-	p.updateCallMetrics(key)
 
+	callKey := buildKey(serviceName, span, p.callDimensions)
+	p.callCache(serviceName, span, callKey)
+	p.updateCallMetrics(callKey)
+
+	key := buildKey(serviceName, span, p.dimensions)
+	p.cache(serviceName, span, key)
 	p.updateLatencyMetrics(key, latencyInMilliseconds, index)
 
 	spanAttr := span.Attributes()
@@ -460,7 +473,7 @@ func buildCustomDimensionKVs(serviceName string, span pdata.Span, optionalDims [
 	dims[serviceNameKey] = serviceName
 	// dims[operationKey] = span.Name()
 	// dims[spanKindKey] = span.Kind().String()
-	// dims[statusCodeKey] = span.Status().Code().String()
+	dims[statusCodeKey] = span.Status().Code().String()
 	spanAttr := span.Attributes()
 	for _, d := range optionalDims {
 		if attr, ok := spanAttr.Get(d.Name); ok {
@@ -500,6 +513,33 @@ func concatDimensionValue(metricKeyBuilder *strings.Builder, value string, prefi
 	metricKeyBuilder.WriteString(value)
 }
 
+// // buildCustomKey builds the metric key from the service name and span metadata such as operation, kind, status_code and
+// // any additional dimensions the user has configured.
+// // The metric key is a simple concatenation of dimension values.
+// func buildCallKey(serviceName string, span pdata.Span, optionalDims []Dimension) metricKey {
+// 	var metricKeyBuilder strings.Builder
+// 	concatDimensionValue(&metricKeyBuilder, serviceName, false)
+// 	concatDimensionValue(&metricKeyBuilder, span.Name(), true)
+// 	concatDimensionValue(&metricKeyBuilder, span.Kind().String(), true)
+// 	concatDimensionValue(&metricKeyBuilder, span.Status().Code().String(), true)
+
+// 	spanAttr := span.Attributes()
+// 	var value string
+// 	for _, d := range optionalDims {
+// 		// Set the default if configured, otherwise this metric will have no value set for the dimension.
+// 		if d.Default != nil {
+// 			value = *d.Default
+// 		}
+// 		if attr, ok := spanAttr.Get(d.Name); ok {
+// 			value = tracetranslator.AttributeValueToString(attr, false)
+// 		}
+// 		concatDimensionValue(&metricKeyBuilder, value, true)
+// 	}
+
+// 	k := metricKey(metricKeyBuilder.String())
+// 	return k
+// }
+
 // buildCustomKey builds the metric key from the service name and span metadata such as operation, kind, status_code and
 // any additional dimensions the user has configured.
 // The metric key is a simple concatenation of dimension values.
@@ -508,7 +548,7 @@ func buildCustomKey(serviceName string, span pdata.Span, optionalDims []Dimensio
 	concatDimensionValue(&metricKeyBuilder, serviceName, false)
 	// concatDimensionValue(&metricKeyBuilder, span.Name(), true)
 	// concatDimensionValue(&metricKeyBuilder, span.Kind().String(), true)
-	// concatDimensionValue(&metricKeyBuilder, span.Status().Code().String(), true)
+	concatDimensionValue(&metricKeyBuilder, span.Status().Code().String(), true)
 
 	spanAttr := span.Attributes()
 	var value string
@@ -569,6 +609,15 @@ func (p *processorImp) externalCallCache(serviceName string, span pdata.Span, k 
 func (p *processorImp) dbCache(serviceName string, span pdata.Span, k metricKey) {
 	if _, ok := p.dbMetricKeyToDimensions[k]; !ok {
 		p.dbMetricKeyToDimensions[k] = buildCustomDimensionKVs(serviceName, span, p.dbCallDimensions)
+	}
+}
+
+// callCache the dimension key-value map for the metricKey if there is a cache miss.
+// This enables a lookup of the dimension key-value map when constructing the metric like so:
+//   LabelsMap().InitFromMap(p.dbMetricKeyToDimensions[key])
+func (p *processorImp) callCache(serviceName string, span pdata.Span, k metricKey) {
+	if _, ok := p.callMetricKeyToDimensions[k]; !ok {
+		p.callMetricKeyToDimensions[k] = buildDimensionKVs(serviceName, span, p.callDimensions)
 	}
 }
 

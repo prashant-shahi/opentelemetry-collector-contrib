@@ -61,9 +61,9 @@ service:
   pipelines:
     traces:
       receivers: [jaeger, otlp]
-      processors: [signozspanmetrics, signozspanmetrics/prometheus, batch]
+      processors: [signozspanmetrics, batch]
       exporters: [clickhouse]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [prometheus, clickhousemetricswrite]
+      exporters: [clickhousemetricswrite]
