@@ -147,6 +147,23 @@ func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
 
 }
 
+func populateEvents(events pdata.SpanEventSlice, span *Span) {
+	for i := 0; i < events.Len(); i++ {
+		event := Event{}
+		event.Name = events.At(i).Name()
+		event.TimeUnixNano = uint64(events.At(i).Timestamp())
+		event.AttributeMap = map[string]string{}
+		events.At(i).Attributes().Range(func(k string, v pdata.AttributeValue) bool {
+			if v.Type().String() == "INT" {
+				event.AttributeMap[k] = strconv.FormatInt(v.IntVal(), 10)
+			} else {
+				event.AttributeMap[k] = v.StringVal()
+			}
+			return true
+		})
+		span.Events = append(span.Events, event)
+	}
+}
 func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 
 	durationNano := uint64(otelSpan.EndTimestamp() - otelSpan.StartTimestamp())
@@ -193,6 +210,7 @@ func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 	span.StatusCode = int64(otelSpan.Status().Code())
 
 	populateOtherDimensions(attributes, span)
+	populateEvents(otelSpan.Events(), span)
 
 	return span
 }
