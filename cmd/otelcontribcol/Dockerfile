@@ -1,5 +1,6 @@
 FROM alpine:latest as certs
 RUN apk --update add ca-certificates
+RUN apk add bash
 
 FROM scratch
 
