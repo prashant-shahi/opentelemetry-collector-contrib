@@ -43,7 +43,7 @@ type Span struct {
 	DBName             string        `json:"dbName,omitempty"`
 	DBOperation        string        `json:"dbOperation,omitempty"`
 	PeerService        string        `json:"peerService,omitempty"`
-	Events             []Event       `json:"event,omitempty"`
+	Events             []string      `json:"event,omitempty"`
 }
 
 type OtelSpanRef struct {

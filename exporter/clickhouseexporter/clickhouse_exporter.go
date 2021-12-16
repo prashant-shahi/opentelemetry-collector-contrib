@@ -16,6 +16,7 @@ package clickhouseexporter
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -161,7 +162,8 @@ func populateEvents(events pdata.SpanEventSlice, span *Span) {
 			}
 			return true
 		})
-		span.Events = append(span.Events, event)
+		stringEvent, _ := json.Marshal(event)
+		span.Events = append(span.Events, string(stringEvent))
 	}
 }
 func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
