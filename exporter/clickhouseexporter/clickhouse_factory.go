@@ -42,7 +42,7 @@ type Writer interface {
 	WriteSpan(span *Span) error
 }
 
-type writerMaker func(logger *zap.Logger, db *sqlx.DB, indexTable string, spansTable string, encoding Encoding, delay time.Duration, size int) (Writer, error)
+type writerMaker func(logger *zap.Logger, db *sqlx.DB, indexTable string, spansTable string, errorTable string, encoding Encoding, delay time.Duration, size int) (Writer, error)
 
 // NewFactory creates a new Factory.
 func ClickHouseNewFactory(datasource string) *Factory {
@@ -51,8 +51,8 @@ func ClickHouseNewFactory(datasource string) *Factory {
 		// makeReader: func(db *sql.DB, operationsTable, indexTable, spansTable string) (spanstore.Reader, error) {
 		// 	return store.NewTraceReader(db, operationsTable, indexTable, spansTable), nil
 		// },
-		makeWriter: func(logger *zap.Logger, db *sqlx.DB, indexTable string, spansTable string, encoding Encoding, delay time.Duration, size int) (Writer, error) {
-			return NewSpanWriter(logger, db, indexTable, spansTable, encoding, delay, size), nil
+		makeWriter: func(logger *zap.Logger, db *sqlx.DB, indexTable string, spansTable string, errorTable string, encoding Encoding, delay time.Duration, size int) (Writer, error) {
+			return NewSpanWriter(logger, db, indexTable, spansTable, errorTable, encoding, delay, size), nil
 		},
 	}
 }
@@ -102,7 +102,7 @@ func (f *Factory) InitFromViper(v *viper.Viper) {
 // CreateSpanWriter implements storage.Factory
 func (f *Factory) CreateSpanWriter() (Writer, error) {
 	cfg := f.Options.getPrimary()
-	return f.makeWriter(f.logger, f.db, cfg.IndexTable, cfg.SpansTable, cfg.Encoding, cfg.WriteBatchDelay, cfg.WriteBatchSize)
+	return f.makeWriter(f.logger, f.db, cfg.IndexTable, cfg.SpansTable, cfg.ErrorTable, cfg.Encoding, cfg.WriteBatchDelay, cfg.WriteBatchSize)
 }
 
 // CreateArchiveSpanWriter implements storage.ArchiveFactory
@@ -111,7 +111,7 @@ func (f *Factory) CreateArchiveSpanWriter() (Writer, error) {
 		return nil, nil
 	}
 	cfg := f.Options.others[archiveNamespace]
-	return f.makeWriter(f.logger, f.archive, "", cfg.SpansTable, cfg.Encoding, cfg.WriteBatchDelay, cfg.WriteBatchSize)
+	return f.makeWriter(f.logger, f.archive, "", cfg.SpansTable, cfg.ErrorTable, cfg.Encoding, cfg.WriteBatchDelay, cfg.WriteBatchSize)
 }
 
 // Close Implements io.Closer and closes the underlying storage

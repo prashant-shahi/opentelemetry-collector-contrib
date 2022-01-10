@@ -44,6 +44,8 @@ type Span struct {
 	DBOperation        string        `json:"dbOperation,omitempty"`
 	PeerService        string        `json:"peerService,omitempty"`
 	Events             []string      `json:"event,omitempty"`
+	ErrorEvent         Event         `json:"errorEvent,omitempty"`
+	ErrorID            string        `json:"errorID,omitempty"`
 }
 
 type OtelSpanRef struct {
