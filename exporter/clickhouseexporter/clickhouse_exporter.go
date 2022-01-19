@@ -19,7 +19,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
+	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/pdata"
 	"go.opentelemetry.io/collector/translator/conventions"
@@ -164,8 +166,15 @@ func populateEvents(events pdata.SpanEventSlice, span *Span) {
 		})
 		stringEvent, _ := json.Marshal(event)
 		span.Events = append(span.Events, string(stringEvent))
+		if event.Name == "exception" {
+			span.ErrorEvent = event
+			uuidWithHyphen := uuid.New()
+			uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+			span.ErrorID = uuid
+		}
 	}
 }
+
 func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 
 	durationNano := uint64(otelSpan.EndTimestamp() - otelSpan.StartTimestamp())
