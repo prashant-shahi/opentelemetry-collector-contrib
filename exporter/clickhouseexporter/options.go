@@ -25,6 +25,7 @@ import (
 
 const (
 	defaultDatasource        string        = "tcp://127.0.0.1:9000"
+	defaultMigrations        string        = "/migrations"
 	defaultOperationsTable   string        = "signoz_operations"
 	defaultIndexTable        string        = "signoz_index"
 	defaultSpansTable        string        = "signoz_spans"
@@ -38,6 +39,7 @@ const (
 const (
 	suffixEnabled         = ".enabled"
 	suffixDatasource      = ".datasource"
+	suffixMigrations      = ".migrations"
 	suffixOperationsTable = ".operations-table"
 	suffixIndexTable      = ".index-table"
 	suffixSpansTable      = ".spans-table"
@@ -90,6 +92,9 @@ func NewOptions(migrations string, datasource string, primaryNamespace string, o
 
 	if datasource == "" {
 		datasource = defaultDatasource
+	}
+	if migrations == "" {
+		migrations = defaultMigrations
 	}
 
 	options := &Options{

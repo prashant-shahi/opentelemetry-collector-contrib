@@ -83,6 +83,7 @@ func (f *Factory) Initialize(logger *zap.Logger) error {
 	}
 
 	m1 := regexp.MustCompile(`(\w+)://`)
+	fmt.Println("Running migrations with path: ", f.Options.primary.Migrations)
 	clickhouseUrl := m1.ReplaceAllString(f.Options.primary.Datasource, "")
 	clickhouseUrl = fmt.Sprintf("clickhouse://%s/database=default&x-multi-statement=true", clickhouseUrl)
 	m, err := migrate.New(
