@@ -16,6 +16,12 @@ package clickhouseexporter
 
 import "encoding/json"
 
+type Event struct {
+	Name         string            `json:"name,omitempty"`
+	TimeUnixNano uint64            `json:"timeUnixNano,omitempty"`
+	AttributeMap map[string]string `json:"attributeMap,omitempty"`
+}
+
 type Span struct {
 	TraceId            string        `json:"traceId,omitempty"`
 	SpanId             string        `json:"spanId,omitempty"`
@@ -37,6 +43,7 @@ type Span struct {
 	DBName             string        `json:"dbName,omitempty"`
 	DBOperation        string        `json:"dbOperation,omitempty"`
 	PeerService        string        `json:"peerService,omitempty"`
+	Events             []string      `json:"event,omitempty"`
 }
 
 type OtelSpanRef struct {
