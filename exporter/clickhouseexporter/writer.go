@@ -190,7 +190,7 @@ func (w *SpanWriter) writeIndexBatch(batch []*Span) error {
 		}
 	}()
 
-	statement, err := tx.Prepare(fmt.Sprintf("INSERT INTO %s (timestamp, traceID, spanID, parentSpanID, serviceName, name, kind, durationNano, tags, tagsKeys, tagsValues, statusCode, references, externalHttpMethod, externalHttpUrl, component, dbSystem, dbName, dbOperation, peerService, events) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", w.indexTable))
+	statement, err := tx.Prepare(fmt.Sprintf("INSERT INTO %s (timestamp, traceID, spanID, parentSpanID, serviceName, name, kind, durationNano, tags, tagsKeys, tagsValues, statusCode, references, externalHttpMethod, externalHttpUrl, component, dbSystem, dbName, dbOperation, peerService, events, httpUrl, httpMethod, httpHost, httpRoute, httpCode, msgSystem, msgOperation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", w.indexTable))
 	if err != nil {
 		return err
 	}
@@ -220,6 +220,13 @@ func (w *SpanWriter) writeIndexBatch(batch []*Span) error {
 			NewNullString(span.DBOperation),
 			NewNullString(span.PeerService),
 			span.Events,
+			span.HttpUrl,
+			span.HttpMethod,
+			span.HttpHost,
+			span.HttpRoute,
+			span.HttpCode,
+			span.MsgSystem,
+			span.MsgOperation,
 		)
 		if err != nil {
 			return err

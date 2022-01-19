@@ -120,22 +120,41 @@ func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
 		if k == "http.status_code" {
 			span.StatusCode = v.IntVal()
 		}
-		if k == "http.url" {
+		if k == "http.url" && span.Kind == 2 {
 			span.ExternalHttpUrl = v.StringVal()
 		}
-		if k == "http.method" {
+		if k == "http.method" && span.Kind == 2 {
 			span.ExternalHttpMethod = v.StringVal()
+		}
+		if k == "http.status_code" {
+			span.HttpCode = strconv.FormatInt(v.IntVal(), 10)
+		}
+		if k == "http.url" {
+			span.HttpUrl = v.StringVal()
+		}
+		if k == "http.method" {
+			span.HttpMethod = v.StringVal()
+		}
+		if k == "http.route" {
+			span.HttpMethod = v.StringVal()
+		}
+		if k == "http.host" {
+			span.HttpHost = v.StringVal()
+		}
+		if k == "messaging.system" {
+			span.MsgSystem = v.StringVal()
+		}
+		if k == "messaging.operation" {
+			span.MsgOperation = v.StringVal()
 		}
 		if k == "component" {
 			span.Component = v.StringVal()
 		}
-
 		if k == "db.system" {
 			span.DBSystem = v.StringVal()
 		}
 		if k == "db.name" {
 			span.DBName = v.StringVal()
-
 		}
 		if k == "db.operation" {
 			span.DBOperation = v.StringVal()
