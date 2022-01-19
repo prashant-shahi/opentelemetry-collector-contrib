@@ -50,9 +50,10 @@ exporters:
     resource_to_telemetry_conversion:
       enabled: true
   clickhouse:
-    datasource: tcp://3.135.248.251:9001
+    datasource: http://localhost:9000
+    migrations: /etc/signoz/migrations
   clickhousemetricswrite:
-    endpoint: tcp://3.135.248.251:9001/?database=signoz_metrics
+    endpoint: http://localhost:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:
       enabled: true
 

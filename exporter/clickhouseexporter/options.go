@@ -51,6 +51,7 @@ type namespaceConfig struct {
 	namespace       string
 	Enabled         bool
 	Datasource      string
+	Migrations      string
 	OperationsTable string
 	IndexTable      string
 	SpansTable      string
@@ -85,7 +86,7 @@ type Options struct {
 }
 
 // NewOptions creates a new Options struct.
-func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...string) *Options {
+func NewOptions(migrations string, datasource string, primaryNamespace string, otherNamespaces ...string) *Options {
 
 	if datasource == "" {
 		datasource = defaultDatasource
@@ -96,6 +97,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			namespace:       primaryNamespace,
 			Enabled:         true,
 			Datasource:      datasource,
+			Migrations:      migrations,
 			OperationsTable: defaultOperationsTable,
 			IndexTable:      defaultIndexTable,
 			SpansTable:      defaultSpansTable,
@@ -113,6 +115,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			options.others[namespace] = &namespaceConfig{
 				namespace:       namespace,
 				Datasource:      datasource,
+				Migrations:      migrations,
 				OperationsTable: "",
 				IndexTable:      "",
 				SpansTable:      defaultArchiveSpansTable,
