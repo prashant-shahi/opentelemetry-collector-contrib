@@ -25,6 +25,7 @@ import (
 
 const (
 	defaultDatasource        string        = "tcp://127.0.0.1:9000"
+	defaultMigrations        string        = "/migrations"
 	defaultOperationsTable   string        = "signoz_operations"
 	defaultIndexTable        string        = "signoz_index"
 	defaultSpansTable        string        = "signoz_spans"
@@ -38,6 +39,7 @@ const (
 const (
 	suffixEnabled         = ".enabled"
 	suffixDatasource      = ".datasource"
+	suffixMigrations      = ".migrations"
 	suffixOperationsTable = ".operations-table"
 	suffixIndexTable      = ".index-table"
 	suffixSpansTable      = ".spans-table"
@@ -51,6 +53,7 @@ type namespaceConfig struct {
 	namespace       string
 	Enabled         bool
 	Datasource      string
+	Migrations      string
 	OperationsTable string
 	IndexTable      string
 	SpansTable      string
@@ -85,10 +88,13 @@ type Options struct {
 }
 
 // NewOptions creates a new Options struct.
-func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...string) *Options {
+func NewOptions(migrations string, datasource string, primaryNamespace string, otherNamespaces ...string) *Options {
 
 	if datasource == "" {
 		datasource = defaultDatasource
+	}
+	if migrations == "" {
+		migrations = defaultMigrations
 	}
 
 	options := &Options{
@@ -96,6 +102,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			namespace:       primaryNamespace,
 			Enabled:         true,
 			Datasource:      datasource,
+			Migrations:      migrations,
 			OperationsTable: defaultOperationsTable,
 			IndexTable:      defaultIndexTable,
 			SpansTable:      defaultSpansTable,
@@ -113,6 +120,7 @@ func NewOptions(datasource string, primaryNamespace string, otherNamespaces ...s
 			options.others[namespace] = &namespaceConfig{
 				namespace:       namespace,
 				Datasource:      datasource,
+				Migrations:      migrations,
 				OperationsTable: "",
 				IndexTable:      "",
 				SpansTable:      defaultArchiveSpansTable,

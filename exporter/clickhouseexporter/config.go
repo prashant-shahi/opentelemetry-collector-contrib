@@ -24,6 +24,7 @@ type Config struct {
 
 	Options    `mapstructure:",squash"`
 	Datasource string `mapstructure:"datasource"`
+	Migrations string `mapstructure:"migrations"`
 }
 
 var _ config.Exporter = (*Config)(nil)
