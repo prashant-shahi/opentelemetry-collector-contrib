@@ -16,7 +16,6 @@ package clickhouseexporter
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -40,7 +39,6 @@ type SpanWriter struct {
 	logger     *zap.Logger
 	db         *sqlx.DB
 	indexTable string
-	spansTable string
 	errorTable string
 	encoding   Encoding
 	delay      time.Duration
@@ -51,12 +49,11 @@ type SpanWriter struct {
 }
 
 // NewSpanWriter returns a SpanWriter for the database
-func NewSpanWriter(logger *zap.Logger, db *sqlx.DB, indexTable string, spansTable string, errorTable string, encoding Encoding, delay time.Duration, size int) *SpanWriter {
+func NewSpanWriter(logger *zap.Logger, db *sqlx.DB, indexTable string, errorTable string, encoding Encoding, delay time.Duration, size int) *SpanWriter {
 	writer := &SpanWriter{
 		logger:     logger,
 		db:         db,
 		indexTable: indexTable,
-		spansTable: spansTable,
 		errorTable: errorTable,
 		encoding:   encoding,
 		delay:      delay,
@@ -112,9 +109,6 @@ func (w *SpanWriter) backgroundWriter() {
 }
 
 func (w *SpanWriter) writeBatch(batch []*Span) error {
-	if err := w.writeModelBatch(batch); err != nil {
-		return err
-	}
 
 	if w.indexTable != "" {
 		if err := w.writeIndexBatch(batch); err != nil {
@@ -128,51 +122,6 @@ func (w *SpanWriter) writeBatch(batch []*Span) error {
 	}
 
 	return nil
-}
-
-func (w *SpanWriter) writeModelBatch(batch []*Span) error {
-	tx, err := w.db.Begin()
-	if err != nil {
-		return err
-	}
-
-	commited := false
-
-	defer func() {
-		if !commited {
-			// Clickhouse does not support real rollback
-			_ = tx.Rollback()
-		}
-	}()
-
-	statement, err := tx.Prepare(fmt.Sprintf("INSERT INTO %s (timestamp, traceID, model) VALUES (?, ?, ?)", w.spansTable))
-	if err != nil {
-		return nil
-	}
-
-	defer statement.Close()
-
-	for _, span := range batch {
-		var serialized []byte
-
-		if w.encoding == EncodingJSON {
-			serialized, err = json.Marshal(span)
-		} else {
-			// serialized, err = proto.Marshal(span)
-		}
-		if err != nil {
-			return err
-		}
-
-		_, err = statement.Exec(span.StartTimeUnixNano, span.TraceId, serialized)
-		if err != nil {
-			return err
-		}
-	}
-
-	commited = true
-
-	return tx.Commit()
 }
 
 func (w *SpanWriter) writeIndexBatch(batch []*Span) error {
