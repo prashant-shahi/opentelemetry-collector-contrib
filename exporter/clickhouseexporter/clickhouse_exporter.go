@@ -17,6 +17,7 @@ package clickhouseexporter
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 
 	"go.opentelemetry.io/collector/config"
@@ -118,7 +119,13 @@ func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
 			span.StatusCode = v.IntVal()
 		}
 		if k == "http.url" {
-			span.ExternalHttpUrl = v.StringVal()
+			value := v.StringVal()
+			valueUrl, err := url.Parse(value)
+			if err == nil {
+				value = valueUrl.Hostname()
+			}
+
+			span.ExternalHttpUrl = value
 		}
 		if k == "http.method" {
 			span.ExternalHttpMethod = v.StringVal()
