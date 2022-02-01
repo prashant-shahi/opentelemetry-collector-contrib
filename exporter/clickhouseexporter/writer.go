@@ -15,13 +15,16 @@
 package clickhouseexporter
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
 	"go.uber.org/zap"
 )
 
@@ -139,7 +142,12 @@ func (w *SpanWriter) writeIndexBatch(batch []*Span) error {
 		}
 	}()
 
-	statement, err := tx.Prepare(fmt.Sprintf("INSERT INTO %s (timestamp, traceID, spanID, parentSpanID, serviceName, name, kind, durationNano, tags, tagsKeys, tagsValues, statusCode, references, externalHttpMethod, externalHttpUrl, component, dbSystem, dbName, dbOperation, peerService, events, httpUrl, httpMethod, httpHost, httpRoute, httpCode, msgSystem, msgOperation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", w.indexTable))
+	ctx := clickhouse.Context(context.Background(), clickhouse.WithSettings(clickhouse.Settings{
+		"max_block_size": 10,
+	}), clickhouse.WithProgress(func(p *clickhouse.Progress) {
+		fmt.Println("progress: ", p)
+	}))
+	statement, err := tx.PrepareContext(ctx, fmt.Sprintf("INSERT INTO %s (timestamp, traceID, spanID, parentSpanID, serviceName, name, kind, durationNano, tags, tagsKeys, tagsValues, statusCode, references, externalHttpMethod, externalHttpUrl, component, dbSystem, dbName, dbOperation, peerService, events, httpUrl, httpMethod, httpHost, httpRoute, httpCode, msgSystem, msgOperation, tagMap) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", w.indexTable))
 	if err != nil {
 		return err
 	}
@@ -147,6 +155,7 @@ func (w *SpanWriter) writeIndexBatch(batch []*Span) error {
 	defer statement.Close()
 
 	for _, span := range batch {
+		bs, err := json.Marshal(span.TagMap)
 		_, err = statement.Exec(
 			span.StartTimeUnixNano,
 			span.TraceId,
@@ -176,6 +185,7 @@ func (w *SpanWriter) writeIndexBatch(batch []*Span) error {
 			span.HttpCode,
 			span.MsgSystem,
 			span.MsgOperation,
+			bs,
 		)
 		if err != nil {
 			return err

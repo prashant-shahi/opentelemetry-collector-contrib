@@ -3,7 +3,8 @@ module github.com/open-telemetry/opentelemetry-collector-contrib
 go 1.15
 
 require (
-	github.com/ClickHouse/clickhouse-go v1.4.5
+	github.com/ClickHouse/clickhouse-go v1.5.3
+	github.com/ClickHouse/clickhouse-go/v2 v2.0.0-beta.15 // indirect
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/golang/snappy v0.0.4

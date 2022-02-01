@@ -51,7 +51,7 @@ exporters:
       enabled: true
   clickhouse:
     datasource: http://localhost:9000
-    migrations: /etc/signoz/migrations
+    migrations: ../../exporter/clickhouseexporter/migrations
   clickhousemetricswrite:
     endpoint: http://localhost:9000/?database=signoz_metrics
     resource_to_telemetry_conversion:
