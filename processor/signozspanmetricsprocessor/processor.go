@@ -568,6 +568,12 @@ func buildCustomKey(serviceName string, span pdata.Span, optionalDims []Dimensio
 		}
 		if attr, ok := spanAttr.Get(d.Name); ok {
 			value = tracetranslator.AttributeValueToString(attr, false)
+			if d.Name == TagHTTPUrl {
+				valueUrl, err := url.Parse(value)
+				if err == nil {
+					value = valueUrl.Hostname()
+				}
+			}
 		}
 		concatDimensionValue(&metricKeyBuilder, value, true)
 	}

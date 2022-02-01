@@ -1,4 +1,8 @@
 receivers:
+  otlp/spanmetrics:
+    protocols:
+      grpc:
+        endpoint: "localhost:12345"
   otlp:
     protocols:
       grpc:
@@ -50,9 +54,9 @@ exporters:
     resource_to_telemetry_conversion:
       enabled: true
   clickhouse:
-    datasource: tcp://3.135.248.251:9001
+    datasource: tcp://stagingapp.signoz.io:9001
   clickhousemetricswrite:
-    endpoint: tcp://3.135.248.251:9001/?database=signoz_metrics
+    endpoint: tcp://stagingapp.signoz.io:9001/?database=signoz_metrics
     resource_to_telemetry_conversion:
       enabled: true
 
@@ -61,9 +65,12 @@ service:
   pipelines:
     traces:
       receivers: [jaeger, otlp]
-      processors: [signozspanmetrics, batch]
+      processors: [signozspanmetrics/prometheus, batch]
       exporters: [clickhouse]
     metrics:
       receivers: [otlp]
       processors: [batch]
       exporters: [clickhousemetricswrite]
+    metrics/spanmetrics:
+      receivers: [otlp/spanmetrics]
+      exporters: [prometheus]

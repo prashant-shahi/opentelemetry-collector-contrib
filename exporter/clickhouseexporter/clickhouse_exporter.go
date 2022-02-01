@@ -118,8 +118,9 @@ func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
 		if k == "http.status_code" {
 			span.StatusCode = v.IntVal()
 		}
-		if k == "http.url" {
+		if k == "http.url" && span.Kind == 3 {
 			value := v.StringVal()
+
 			valueUrl, err := url.Parse(value)
 			if err == nil {
 				value = valueUrl.Hostname()
