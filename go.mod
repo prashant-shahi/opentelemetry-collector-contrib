@@ -3,8 +3,12 @@ module github.com/open-telemetry/opentelemetry-collector-contrib
 go 1.15
 
 require (
-	github.com/ClickHouse/clickhouse-go v1.4.5 // indirect
-	github.com/jmoiron/sqlx v1.3.4 // indirect
+	github.com/ClickHouse/clickhouse-go v1.4.5
+	github.com/gogo/protobuf v1.3.2
+	github.com/golang-migrate/migrate/v4 v4.15.1
+	github.com/golang/snappy v0.0.4
+	github.com/google/uuid v1.3.0
+	github.com/jmoiron/sqlx v1.3.4
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/alibabacloudlogserviceexporter v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awsemfexporter v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-collector-contrib/exporter/awskinesisexporter v0.0.0-00010101000000-000000000000
@@ -41,7 +45,7 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/metricstransformprocessor v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/resourcedetectionprocessor v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/routingprocessor v0.0.0-00010101000000-000000000000
-	github.com/open-telemetry/opentelemetry-collector-contrib/processor/signozspanmetricsprocessor v0.0.0-00010101000000-000000000000 // indirect
+	github.com/open-telemetry/opentelemetry-collector-contrib/processor/signozspanmetricsprocessor v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/spanmetricsprocessor v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-collector-contrib/processor/tailsamplingprocessor v0.0.0-00010101000000-000000000000
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/awsecscontainermetricsreceiver v0.0.0-00010101000000-000000000000
@@ -70,15 +74,14 @@ require (
 	github.com/open-telemetry/opentelemetry-collector-contrib/receiver/zookeeperreceiver v0.0.0-00010101000000-000000000000
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.10.0
-	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.24.0
 	github.com/prometheus/prometheus v1.8.2-0.20210430082741-2a4b8e12bbf2
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/viper v1.7.1 // indirect
+	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/collector v0.26.0
-	go.uber.org/zap v1.16.0 // indirect
-	golang.org/x/sys v0.0.0-20210412220455-f1c623a9e750
+	go.uber.org/zap v1.16.0
+	golang.org/x/sys v0.0.0-20211013075003-97ac67df715c
 )
 
 // Replace references to modules that are in this repository with their relateive paths

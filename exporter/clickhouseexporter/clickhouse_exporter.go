@@ -16,10 +16,13 @@ package clickhouseexporter
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
+	"github.com/google/uuid"
 	"go.opentelemetry.io/collector/config"
 	"go.opentelemetry.io/collector/consumer/pdata"
 	"go.opentelemetry.io/collector/translator/conventions"
@@ -31,7 +34,7 @@ func newExporter(cfg config.Exporter, logger *zap.Logger) (*storage, error) {
 
 	configClickHouse := cfg.(*Config)
 
-	f := ClickHouseNewFactory(configClickHouse.Datasource)
+	f := ClickHouseNewFactory(configClickHouse.Migrations, configClickHouse.Datasource)
 
 	err := f.Initialize(logger)
 	if err != nil {
@@ -127,20 +130,40 @@ func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
 			}
 
 			span.ExternalHttpUrl = value
+
+		}
+		if k == "http.method" && span.Kind == 2 {
+			span.ExternalHttpMethod = v.StringVal()
+		}
+		if k == "http.status_code" {
+			span.HttpCode = strconv.FormatInt(v.IntVal(), 10)
+		}
+		if k == "http.url" {
+			span.HttpUrl = v.StringVal()
 		}
 		if k == "http.method" {
-			span.ExternalHttpMethod = v.StringVal()
+			span.HttpMethod = v.StringVal()
+		}
+		if k == "http.route" {
+			span.HttpMethod = v.StringVal()
+		}
+		if k == "http.host" {
+			span.HttpHost = v.StringVal()
+		}
+		if k == "messaging.system" {
+			span.MsgSystem = v.StringVal()
+		}
+		if k == "messaging.operation" {
+			span.MsgOperation = v.StringVal()
 		}
 		if k == "component" {
 			span.Component = v.StringVal()
 		}
-
 		if k == "db.system" {
 			span.DBSystem = v.StringVal()
 		}
 		if k == "db.name" {
 			span.DBName = v.StringVal()
-
 		}
 		if k == "db.operation" {
 			span.DBOperation = v.StringVal()
@@ -153,6 +176,31 @@ func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
 
 	})
 
+}
+
+func populateEvents(events pdata.SpanEventSlice, span *Span) {
+	for i := 0; i < events.Len(); i++ {
+		event := Event{}
+		event.Name = events.At(i).Name()
+		event.TimeUnixNano = uint64(events.At(i).Timestamp())
+		event.AttributeMap = map[string]string{}
+		events.At(i).Attributes().Range(func(k string, v pdata.AttributeValue) bool {
+			if v.Type().String() == "INT" {
+				event.AttributeMap[k] = strconv.FormatInt(v.IntVal(), 10)
+			} else {
+				event.AttributeMap[k] = v.StringVal()
+			}
+			return true
+		})
+		stringEvent, _ := json.Marshal(event)
+		span.Events = append(span.Events, string(stringEvent))
+		if event.Name == "exception" {
+			span.ErrorEvent = event
+			uuidWithHyphen := uuid.New()
+			uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+			span.ErrorID = uuid
+		}
+	}
 }
 
 func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
@@ -201,6 +249,7 @@ func newStructuredSpan(otelSpan pdata.Span, ServiceName string) *Span {
 	span.StatusCode = int64(otelSpan.Status().Code())
 
 	populateOtherDimensions(attributes, span)
+	populateEvents(otelSpan.Events(), span)
 
 	return span
 }

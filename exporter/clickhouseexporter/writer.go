@@ -16,7 +16,6 @@ package clickhouseexporter
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -40,7 +39,7 @@ type SpanWriter struct {
 	logger     *zap.Logger
 	db         *sqlx.DB
 	indexTable string
-	spansTable string
+	errorTable string
 	encoding   Encoding
 	delay      time.Duration
 	size       int
@@ -50,12 +49,12 @@ type SpanWriter struct {
 }
 
 // NewSpanWriter returns a SpanWriter for the database
-func NewSpanWriter(logger *zap.Logger, db *sqlx.DB, indexTable string, spansTable string, encoding Encoding, delay time.Duration, size int) *SpanWriter {
+func NewSpanWriter(logger *zap.Logger, db *sqlx.DB, indexTable string, errorTable string, encoding Encoding, delay time.Duration, size int) *SpanWriter {
 	writer := &SpanWriter{
 		logger:     logger,
 		db:         db,
 		indexTable: indexTable,
-		spansTable: spansTable,
+		errorTable: errorTable,
 		encoding:   encoding,
 		delay:      delay,
 		size:       size,
@@ -110,62 +109,19 @@ func (w *SpanWriter) backgroundWriter() {
 }
 
 func (w *SpanWriter) writeBatch(batch []*Span) error {
-	if err := w.writeModelBatch(batch); err != nil {
-		return err
-	}
 
 	if w.indexTable != "" {
 		if err := w.writeIndexBatch(batch); err != nil {
 			return err
 		}
 	}
+	if w.errorTable != "" {
+		if err := w.writeErrorBatch(batch); err != nil {
+			return err
+		}
+	}
 
 	return nil
-}
-
-func (w *SpanWriter) writeModelBatch(batch []*Span) error {
-	tx, err := w.db.Begin()
-	if err != nil {
-		return err
-	}
-
-	commited := false
-
-	defer func() {
-		if !commited {
-			// Clickhouse does not support real rollback
-			_ = tx.Rollback()
-		}
-	}()
-
-	statement, err := tx.Prepare(fmt.Sprintf("INSERT INTO %s (timestamp, traceID, model) VALUES (?, ?, ?)", w.spansTable))
-	if err != nil {
-		return nil
-	}
-
-	defer statement.Close()
-
-	for _, span := range batch {
-		var serialized []byte
-
-		if w.encoding == EncodingJSON {
-			serialized, err = json.Marshal(span)
-		} else {
-			// serialized, err = proto.Marshal(span)
-		}
-		if err != nil {
-			return err
-		}
-
-		_, err = statement.Exec(span.StartTimeUnixNano, span.TraceId, serialized)
-		if err != nil {
-			return err
-		}
-	}
-
-	commited = true
-
-	return tx.Commit()
 }
 
 func (w *SpanWriter) writeIndexBatch(batch []*Span) error {
@@ -183,7 +139,7 @@ func (w *SpanWriter) writeIndexBatch(batch []*Span) error {
 		}
 	}()
 
-	statement, err := tx.Prepare(fmt.Sprintf("INSERT INTO %s (timestamp, traceID, spanID, parentSpanID, serviceName, name, kind, durationNano, tags, tagsKeys, tagsValues, statusCode, references, externalHttpMethod, externalHttpUrl, component, dbSystem, dbName, dbOperation, peerService) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", w.indexTable))
+	statement, err := tx.Prepare(fmt.Sprintf("INSERT INTO %s (timestamp, traceID, spanID, parentSpanID, serviceName, name, kind, durationNano, tags, tagsKeys, tagsValues, statusCode, references, externalHttpMethod, externalHttpUrl, component, dbSystem, dbName, dbOperation, peerService, events, httpUrl, httpMethod, httpHost, httpRoute, httpCode, msgSystem, msgOperation) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", w.indexTable))
 	if err != nil {
 		return err
 	}
@@ -212,6 +168,62 @@ func (w *SpanWriter) writeIndexBatch(batch []*Span) error {
 			NewNullString(span.DBName),
 			NewNullString(span.DBOperation),
 			NewNullString(span.PeerService),
+			span.Events,
+			span.HttpUrl,
+			span.HttpMethod,
+			span.HttpHost,
+			span.HttpRoute,
+			span.HttpCode,
+			span.MsgSystem,
+			span.MsgOperation,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	commited = true
+
+	return tx.Commit()
+}
+
+func (w *SpanWriter) writeErrorBatch(batch []*Span) error {
+	tx, err := w.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	commited := false
+
+	defer func() {
+		if !commited {
+			// Clickhouse does not support real rollback
+			_ = tx.Rollback()
+		}
+	}()
+
+	statement, err := tx.Prepare(fmt.Sprintf("INSERT INTO %s (timestamp, errorID, traceID, spanID, parentSpanID, serviceName, exceptionType, exceptionMessage, excepionStacktrace, exceptionEscaped) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", w.errorTable))
+	if err != nil {
+		return err
+	}
+
+	defer statement.Close()
+
+	for _, span := range batch {
+		if span.ErrorEvent.Name == "" {
+			continue
+		}
+		_, err = statement.Exec(
+			span.ErrorEvent.TimeUnixNano,
+			span.ErrorID,
+			span.TraceId,
+			span.SpanId,
+			span.ParentSpanId,
+			span.ServiceName,
+			span.ErrorEvent.AttributeMap["exception.type"],
+			span.ErrorEvent.AttributeMap["exception.message"],
+			span.ErrorEvent.AttributeMap["exception.stacktrace"],
+			span.ErrorEvent.AttributeMap["exception.escaped"],
 		)
 		if err != nil {
 			return err

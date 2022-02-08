@@ -16,6 +16,12 @@ package clickhouseexporter
 
 import "encoding/json"
 
+type Event struct {
+	Name         string            `json:"name,omitempty"`
+	TimeUnixNano uint64            `json:"timeUnixNano,omitempty"`
+	AttributeMap map[string]string `json:"attributeMap,omitempty"`
+}
+
 type Span struct {
 	TraceId            string        `json:"traceId,omitempty"`
 	SpanId             string        `json:"spanId,omitempty"`
@@ -31,12 +37,22 @@ type Span struct {
 	TagsValues         []string      `json:"tagsValues,omitempty"`
 	StatusCode         int64         `json:"statusCode,omitempty"`
 	ExternalHttpMethod string        `json:"externalHttpMethod,omitempty"`
+	HttpUrl            string        `json:"httpUrl,omitempty"`
+	HttpMethod         string        `json:"httpMethod,omitempty"`
+	HttpHost           string        `json:"httpHost,omitempty"`
+	HttpRoute          string        `json:"httpRoute,omitempty"`
+	HttpCode           string        `json:"httpCode,omitempty"`
+	MsgSystem          string        `json:"msgSystem,omitempty"`
+	MsgOperation       string        `json:"msgOperation,omitempty"`
 	ExternalHttpUrl    string        `json:"externalHttpUrl,omitempty"`
 	Component          string        `json:"component,omitempty"`
 	DBSystem           string        `json:"dbSystem,omitempty"`
 	DBName             string        `json:"dbName,omitempty"`
 	DBOperation        string        `json:"dbOperation,omitempty"`
 	PeerService        string        `json:"peerService,omitempty"`
+	Events             []string      `json:"event,omitempty"`
+	ErrorEvent         Event         `json:"errorEvent,omitempty"`
+	ErrorID            string        `json:"errorID,omitempty"`
 }
 
 type OtelSpanRef struct {
