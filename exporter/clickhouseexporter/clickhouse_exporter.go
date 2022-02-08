@@ -18,6 +18,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -120,8 +121,16 @@ func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
 		if k == "http.status_code" {
 			span.StatusCode = v.IntVal()
 		}
-		if k == "http.url" && span.Kind == 2 {
-			span.ExternalHttpUrl = v.StringVal()
+		if k == "http.url" && span.Kind == 3 {
+			value := v.StringVal()
+
+			valueUrl, err := url.Parse(value)
+			if err == nil {
+				value = valueUrl.Hostname()
+			}
+
+			span.ExternalHttpUrl = value
+
 		}
 		if k == "http.method" && span.Kind == 2 {
 			span.ExternalHttpMethod = v.StringVal()

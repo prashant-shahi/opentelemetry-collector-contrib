@@ -1,4 +1,8 @@
 receivers:
+  otlp/spanmetrics:
+    protocols:
+      grpc:
+        endpoint: "localhost:12345"
   otlp:
     protocols:
       grpc:
@@ -62,9 +66,12 @@ service:
   pipelines:
     traces:
       receivers: [jaeger, otlp]
-      processors: [signozspanmetrics, batch]
+      processors: [signozspanmetrics/prometheus, batch]
       exporters: [clickhouse]
     metrics:
       receivers: [otlp]
       processors: [batch]
       exporters: [clickhousemetricswrite]
+    metrics/spanmetrics:
+      receivers: [otlp/spanmetrics]
+      exporters: [prometheus]

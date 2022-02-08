@@ -18,6 +18,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -39,6 +40,7 @@ const (
 	spanKindKey        = tracetranslator.TagSpanKind
 	statusCodeKey      = tracetranslator.TagStatusCode
 	TagHTTPStatusCode  = tracetranslator.TagHTTPStatusCode
+	TagHTTPUrl         = "http.url"
 	metricKeySeparator = string(byte(0))
 )
 
@@ -132,7 +134,7 @@ func newProcessor(logger *zap.Logger, config config.Processor, nextConsumer cons
 
 	externalCallDimensions := []Dimension{
 		{Name: "http.status_code"},
-		{Name: "http.url"},
+		{Name: TagHTTPUrl},
 		{Name: "http.method"},
 	}
 
@@ -250,7 +252,7 @@ func (p *processorImp) GetCapabilities() component.ProcessorCapabilities {
 // It aggregates the trace data to generate metrics, forwarding these metrics to the discovered metrics exporter.
 // The original input trace data will be forwarded to the next consumer, unmodified.
 func (p *processorImp) ConsumeTraces(ctx context.Context, traces pdata.Traces) error {
-	p.logger.Info("Consuming trace data")
+	// p.logger.Info("Consuming trace data")
 
 	p.aggregateMetrics(traces)
 
@@ -477,7 +479,14 @@ func buildCustomDimensionKVs(serviceName string, span pdata.Span, optionalDims [
 	spanAttr := span.Attributes()
 	for _, d := range optionalDims {
 		if attr, ok := spanAttr.Get(d.Name); ok {
-			dims[d.Name] = tracetranslator.AttributeValueToString(attr, false)
+			value := tracetranslator.AttributeValueToString(attr, false)
+			if d.Name == TagHTTPUrl {
+				valueUrl, err := url.Parse(value)
+				if err == nil {
+					value = valueUrl.Hostname()
+				}
+			}
+			dims[d.Name] = value
 		} else if d.Default != nil {
 			// Set the default if configured, otherwise this metric should have no value set for the dimension.
 			dims[d.Name] = *d.Default
@@ -559,6 +568,12 @@ func buildCustomKey(serviceName string, span pdata.Span, optionalDims []Dimensio
 		}
 		if attr, ok := spanAttr.Get(d.Name); ok {
 			value = tracetranslator.AttributeValueToString(attr, false)
+			if d.Name == TagHTTPUrl {
+				valueUrl, err := url.Parse(value)
+				if err == nil {
+					value = valueUrl.Hostname()
+				}
+			}
 		}
 		concatDimensionValue(&metricKeyBuilder, value, true)
 	}
