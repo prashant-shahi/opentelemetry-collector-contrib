@@ -122,7 +122,7 @@ func buildClickhouseMigrateURL(datasource string) (string, error) {
 		database = databaseArr[0]
 	}
 	if len(username) > 0 && len(password) > 0 {
-		clickhouseUrl = fmt.Sprintf("clickhouse://%s:%s@%s/database=%s?x-multi-statement=true", username[0], password[0], host, database)
+		clickhouseUrl = fmt.Sprintf("clickhouse://%s?username=%s&password=%s&database=%s&x-multi-statement=true", host, username[0], password[0], database)
 	} else {
 		clickhouseUrl = fmt.Sprintf("clickhouse://%s/database=%s?x-multi-statement=true", host, database)
 	}
