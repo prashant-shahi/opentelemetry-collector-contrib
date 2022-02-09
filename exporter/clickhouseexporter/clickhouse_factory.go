@@ -84,7 +84,7 @@ func (f *Factory) Initialize(logger *zap.Logger) error {
 	}
 
 	fmt.Println("Running migrations from path: ", f.Options.primary.Migrations)
-	clickhouseUrl, err := buildClickhouseMigrateURL("http://signoz-clickhouse:9000?username=clickhouse_operator&password=clickhouse_operator_password")
+	clickhouseUrl, err := buildClickhouseMigrateURL(f.Options.primary.Datasource)
 	if err != nil {
 		return fmt.Errorf("Failed to build Clickhouse migrate URL, error: %s", err)
 	}
