@@ -17,12 +17,13 @@ package clickhouseexporter
 import (
 	"flag"
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/jmoiron/sqlx"
 
 	_ "github.com/ClickHouse/clickhouse-go"
+
+	"net/url"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/clickhouse"
@@ -82,10 +83,11 @@ func (f *Factory) Initialize(logger *zap.Logger) error {
 		f.archive = archive
 	}
 
-	m1 := regexp.MustCompile(`(\w+)://`)
-	fmt.Println("Running migrations with path: ", f.Options.primary.Migrations)
-	clickhouseUrl := m1.ReplaceAllString(f.Options.primary.Datasource, "")
-	clickhouseUrl = fmt.Sprintf("clickhouse://%s/database=default&x-multi-statement=true", clickhouseUrl)
+	fmt.Println("Running migrations from path: ", f.Options.primary.Migrations)
+	clickhouseUrl, err := buildClickhouseMigrateURL("http://signoz-clickhouse:9000?username=clickhouse_operator&password=clickhouse_operator_password")
+	if err != nil {
+		return fmt.Errorf("Failed to build Clickhouse migrate URL, error: %s", err)
+	}
 	m, err := migrate.New(
 		"file://"+f.Options.primary.Migrations,
 		clickhouseUrl)
@@ -95,6 +97,36 @@ func (f *Factory) Initialize(logger *zap.Logger) error {
 	m.Up()
 
 	return nil
+}
+
+func buildClickhouseMigrateURL(datasource string) (string, error) {
+	var clickhouseUrl string
+	database := "default"
+	parsedURL, err := url.Parse(datasource)
+	if err != nil {
+		return "", err
+	}
+	host := parsedURL.Host
+	if host == "" {
+		return "", fmt.Errorf("Unable to parse host")
+
+	}
+	paramMap, err := url.ParseQuery(parsedURL.RawQuery)
+	if err != nil {
+		return "", err
+	}
+	username := paramMap["username"]
+	password := paramMap["password"]
+	databaseArr := paramMap["database"]
+	if len(databaseArr) > 0 {
+		database = databaseArr[0]
+	}
+	if len(username) > 0 && len(password) > 0 {
+		clickhouseUrl = fmt.Sprintf("clickhouse://%s:%s@%s/database=%s?x-multi-statement=true", username[0], password[0], host, database)
+	} else {
+		clickhouseUrl = fmt.Sprintf("clickhouse://%s/database=%s?x-multi-statement=true", host, database)
+	}
+	return clickhouseUrl, nil
 }
 
 func (f *Factory) connect(cfg *namespaceConfig) (*sqlx.DB, error) {
