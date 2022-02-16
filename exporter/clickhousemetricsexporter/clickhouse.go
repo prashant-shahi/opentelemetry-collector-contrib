@@ -81,8 +81,8 @@ func NewClickHouse(params *ClickHouseParams) (base.Storage, error) {
 
 	queries = append(queries, fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s.time_series (
-			date Date Codec(DoubleDelta, LZ4),
-			fingerprint UInt64 Codec(DoubleDelta, LZ4),
+			date Date Codec(Delta, LZ4),
+			fingerprint UInt64 Codec(Delta, LZ4),
 			labels String Codec(ZSTD(5))
 		)
 		ENGINE = ReplacingMergeTree
@@ -92,12 +92,12 @@ func NewClickHouse(params *ClickHouseParams) (base.Storage, error) {
 	// change sampleRowSize is you change this table
 	queries = append(queries, fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s.samples (
-			fingerprint UInt64 Codec(DoubleDelta, LZ4),
-			timestamp_ms Int64 Codec(DoubleDelta, LZ4),
+			fingerprint UInt64 Codec(Delta, LZ4),
+			timestamp_ms Int64 Codec(Delta, LZ4),
 			value Float64 Codec(Gorilla, LZ4)
 		)
 		ENGINE = MergeTree
-			PARTITION BY toDate(timestamp_ms / 1000)
+			PARTITION BY toStartOfInterval(toDateTime(timestamp_ms / 1000), INTERVAL 2 HOUR)
 			ORDER BY (fingerprint, timestamp_ms)`, database))
 
 	// connect without seting database, init schema
