@@ -96,6 +96,7 @@ func (f *Factory) Initialize(logger *zap.Logger) error {
 }
 
 func buildClickhouseMigrateURL(datasource string) (string, error) {
+	// return fmt.Sprintf("clickhouse://localhost:9000?database=default&x-multi-statement=true"), nil
 	var clickhouseUrl string
 	database := "default"
 	parsedURL, err := url.Parse(datasource)
@@ -118,7 +119,7 @@ func buildClickhouseMigrateURL(datasource string) (string, error) {
 		database = databaseArr[0]
 	}
 	if len(username) > 0 && len(password) > 0 {
-		clickhouseUrl = fmt.Sprintf("clickhouse://%s?username=%s&password=%s&database=%s&x-multi-statement=true", host, username[0], password[0], database)
+		clickhouseUrl = fmt.Sprintf("clickhouse://%s:%s@%s/database=%s?x-multi-statement=true", username[0], password[0], host, database)
 	} else {
 		clickhouseUrl = fmt.Sprintf("clickhouse://%s?database=%s&x-multi-statement=true", host, database)
 	}
