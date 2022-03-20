@@ -43,22 +43,20 @@ const (
 
 // clickHouse implements storage interface for the ClickHouse.
 type clickHouse struct {
-	db                   *sql.DB
-	l                    *logrus.Entry
-	database             string
-	maxTimeSeriesInQuery int
+	db       *sql.DB
+	l        *logrus.Entry
+	database string
 
 	timeSeriesRW sync.RWMutex
-	timeSeries   map[uint64][]*prompb.Label
+	timeSeries   map[uint64]struct{}
 
 	mWrittenTimeSeries prometheus.Counter
 }
 
 type ClickHouseParams struct {
-	DSN                  string
-	DropDatabase         bool
-	MaxOpenConns         int
-	MaxTimeSeriesInQuery int
+	DSN          string
+	DropDatabase bool
+	MaxOpenConns int
 }
 
 func NewClickHouse(params *ClickHouseParams) (base.Storage, error) {
@@ -84,7 +82,7 @@ func NewClickHouse(params *ClickHouseParams) (base.Storage, error) {
 		CREATE TABLE IF NOT EXISTS %s.time_series (
 			date Date Codec(DoubleDelta, LZ4),
 			fingerprint UInt64 Codec(DoubleDelta, LZ4),
-			labels String Codec(ZSTD(5))
+			labels LowCardinality(String) Codec(ZSTD(5))
 		)
 		ENGINE = ReplacingMergeTree
 			PARTITION BY date
@@ -93,13 +91,14 @@ func NewClickHouse(params *ClickHouseParams) (base.Storage, error) {
 	// change sampleRowSize is you change this table
 	queries = append(queries, fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s.samples (
+			metric_name LowCardinality(String) CODEC(ZSTD(1),
 			fingerprint UInt64 Codec(DoubleDelta, LZ4),
 			timestamp_ms Int64 Codec(DoubleDelta, LZ4),
 			value Float64 Codec(Gorilla, LZ4)
 		)
 		ENGINE = MergeTree
-			PARTITION BY toDate(timestamp_ms / 1000)
-			ORDER BY (fingerprint, timestamp_ms)`, database))
+			PARTITION BY toDate(intDiv(timestamp_ms, 1000))
+			ORDER BY (metric_name, fingerprint, timestamp_ms)`, database))
 
 	options := &clickhouse.Options{
 		Addr: []string{dsnURL.Host},
@@ -135,12 +134,11 @@ func NewClickHouse(params *ClickHouseParams) (base.Storage, error) {
 	}
 
 	ch := &clickHouse{
-		db:                   initDB,
-		l:                    l,
-		database:             database,
-		maxTimeSeriesInQuery: params.MaxTimeSeriesInQuery,
+		db:       initDB,
+		l:        l,
+		database: database,
 
-		timeSeries: make(map[uint64][]*prompb.Label, 8192),
+		timeSeries: make(map[uint64]struct{}, 1000000),
 
 		mWrittenTimeSeries: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: namespace,
@@ -192,8 +190,8 @@ func (ch *clickHouse) runTimeSeriesReloader(ctx context.Context) {
 		if err == nil {
 			ch.timeSeriesRW.Lock()
 			n := len(timeSeries) - len(ch.timeSeries)
-			for f, m := range timeSeries {
-				ch.timeSeries[f] = m
+			for f, _ := range timeSeries {
+				ch.timeSeries[f] = struct{}{}
 			}
 			ch.timeSeriesRW.Unlock()
 			ch.l.Debugf("Loaded %d existing time series, %d were unknown to this instance.", len(timeSeries), n)
@@ -265,11 +263,11 @@ func (ch *clickHouse) Write(ctx context.Context, data *prompb.WriteRequest) erro
 	// find new time series
 	var newTimeSeries []uint64
 	ch.timeSeriesRW.Lock()
-	for f, m := range timeSeries {
+	for f, _ := range timeSeries {
 		_, ok := ch.timeSeries[f]
 		if !ok {
 			newTimeSeries = append(newTimeSeries, f)
-			ch.timeSeries[f] = m
+			ch.timeSeries[f] = struct{}{}
 		}
 	}
 	ch.timeSeriesRW.Unlock()

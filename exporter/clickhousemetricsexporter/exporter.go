@@ -71,10 +71,9 @@ func NewPrwExporter(cfg *Config, set component.ExporterCreateSettings) (*PrwExpo
 	userAgentHeader := fmt.Sprintf("%s/%s", strings.ReplaceAll(strings.ToLower(set.BuildInfo.Description), " ", "-"), set.BuildInfo.Version)
 
 	params := &ClickHouseParams{
-		DSN:                  cfg.HTTPClientSettings.Endpoint,
-		DropDatabase:         false,
-		MaxOpenConns:         75,
-		MaxTimeSeriesInQuery: 50,
+		DSN:          cfg.HTTPClientSettings.Endpoint,
+		DropDatabase: false,
+		MaxOpenConns: 75,
 	}
 	ch, err := NewClickHouse(params)
 	if err != nil {
