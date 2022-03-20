@@ -38,8 +38,8 @@ import (
 
 const (
 	signozMetricDBName = "signoz_metrics"
-	signozSampleName   = "samples_new"
-	signozTSName       = "time_series_new"
+	signozSampleName   = "samples"
+	signozTSName       = "time_series"
 )
 
 // clickHouse implements storage interface for the ClickHouse.
