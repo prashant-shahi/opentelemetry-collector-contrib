@@ -237,6 +237,16 @@ func inTransaction(ctx context.Context, txer beginTxer, f func(*sql.Tx) error) (
 	return
 }
 
+func getMetricNameFromLabels(labels *[]prompb.Label) (*string, error) {
+
+	for _, label := range *labels {
+		if label.Name == "__name__" {
+			return &label.Value, nil
+		}
+	}
+	return nil, fmt.Errorf("__name__ not found in labels of time series")
+}
+
 func (ch *clickHouse) Write(ctx context.Context, data *prompb.WriteRequest) error {
 	// calculate fingerprints, map them to time series
 	fingerprints := make([]uint64, len(data.Timeseries))
@@ -304,7 +314,7 @@ func (ch *clickHouse) Write(ctx context.Context, data *prompb.WriteRequest) erro
 
 	// write samples
 	err := inTransaction(ctx, ch.db, func(tx *sql.Tx) error {
-		query := fmt.Sprintf(`INSERT INTO %s.samples (fingerprint, timestamp_ms, value) VALUES (?, ?, ?)`, ch.database)
+		query := fmt.Sprintf(`INSERT INTO %s.samples (metric_name, fingerprint, timestamp_ms, value) VALUES (?, ?, ?)`, ch.database)
 		var stmt *sql.Stmt
 		var err error
 		if stmt, err = tx.PrepareContext(ctx, query); err != nil {
@@ -313,11 +323,15 @@ func (ch *clickHouse) Write(ctx context.Context, data *prompb.WriteRequest) erro
 
 		args := make([]interface{}, 3)
 		for i, ts := range data.Timeseries {
-			args[0] = fingerprints[i]
+			args[0], err = getMetricNameFromLabels(&ts.Labels)
+			if err != nil {
+				return errors.WithStack(err)
+			}
+			args[1] = fingerprints[i]
 
 			for _, s := range ts.Samples {
-				args[1] = s.Timestamp
-				args[2] = s.Value
+				args[2] = s.Timestamp
+				args[3] = s.Value
 				// ch.l.Debugf("%s %v", query, args)
 				if _, err := stmt.ExecContext(ctx, args...); err != nil {
 					return errors.WithStack(err)
