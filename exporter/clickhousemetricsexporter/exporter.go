@@ -26,7 +26,6 @@ import (
 
 	"github.com/pkg/errors"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 
 	"github.com/prometheus/prometheus/prompb"
 
@@ -77,7 +76,7 @@ func NewPrwExporter(cfg *Config, set component.ExporterCreateSettings) (*PrwExpo
 	}
 	ch, err := NewClickHouse(params)
 	if err != nil {
-		zap.S().Error("couldn't create instance of clickhouse")
+		return nil, err
 	}
 
 	return &PrwExporter{
