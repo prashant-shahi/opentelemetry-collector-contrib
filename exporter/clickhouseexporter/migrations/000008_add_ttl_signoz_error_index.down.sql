@@ -1,0 +1,1 @@
+ALTER TABLE signoz_error_index REMOVE TTL
