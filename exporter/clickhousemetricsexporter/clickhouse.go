@@ -89,7 +89,7 @@ func NewClickHouse(params *ClickHouseParams) (base.Storage, error) {
 		ENGINE = ReplacingMergeTree
 			PARTITION BY date
 			ORDER BY fingerprint
-			TTL date + INTERVAL 1 MONTH DELETE`, database))
+			TTL date + INTERVAL 2628000 SECOND DELETE`, database))
 
 	// change sampleRowSize is you change this table
 	queries = append(queries, fmt.Sprintf(`
@@ -101,7 +101,7 @@ func NewClickHouse(params *ClickHouseParams) (base.Storage, error) {
 		ENGINE = MergeTree
 			PARTITION BY toDate(timestamp_ms / 1000)
 			ORDER BY (fingerprint, timestamp_ms)
-			TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL 1 MONTH DELETE`, database))
+			TTL toDateTime(toUInt32(timestamp_ms / 1000), 'UTC') + INTERVAL 2628000 SECOND DELETE`, database))
 
 	options := &clickhouse.Options{
 		Addr: []string{dsnURL.Host},

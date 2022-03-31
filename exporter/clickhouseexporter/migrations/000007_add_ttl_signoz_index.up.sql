@@ -1,1 +1,1 @@
-ALTER TABLE signoz_index MODIFY TTL toDateTime(timestamp) + INTERVAL 7 DAY DELETE
+ALTER TABLE signoz_index MODIFY TTL toDateTime(timestamp) + INTERVAL 604800 SECOND DELETE
