@@ -56,6 +56,8 @@ type Span struct {
 	ErrorID            string            `json:"errorID,omitempty"`
 	TagMap             map[string]string `json:"tagMap,omitempty"`
 	HasError           int32             `json:"hasError,omitempty"` // Using int32 instead of bool because ClickHouse doesn't support bool
+	GRPCCode           string            `json:"gRPCCode,omitempty"`
+	GRPCMethod         string            `json:"gRPCMethod,omitempty"`
 }
 
 type OtelSpanRef struct {

@@ -119,8 +119,7 @@ func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
 
 	attributes.Range(func(k string, v pdata.AttributeValue) bool {
 		if k == "http.status_code" {
-			span.StatusCode = v.IntVal()
-			if span.StatusCode >= 400 {
+			if v.IntVal() >= 400 {
 				span.HasError = 1
 			}
 			span.HttpCode = strconv.FormatInt(v.IntVal(), 10)
@@ -155,6 +154,13 @@ func populateOtherDimensions(attributes pdata.AttributeMap, span *Span) {
 			span.DBOperation = v.StringVal()
 		} else if k == "peer.service" {
 			span.PeerService = v.StringVal()
+		} else if k == "rpc.grpc.status_code" {
+			if v.IntVal() >= 2 {
+				span.HasError = 1
+			}
+			span.GRPCCode = strconv.FormatInt(v.IntVal(), 10)
+		} else if k == "rpc.method" {
+			span.GRPCMethod = v.StringVal()
 		}
 
 		return true
