@@ -125,21 +125,21 @@ func newProcessor(logger *zap.Logger, config config.Processor, nextConsumer cons
 		// {Name: statusCodeKey},
 		{Name: TagHTTPStatusCode},
 	}
-	callDimensions = append(callDimensions, pConfig.Dimensions)
+	callDimensions = append(callDimensions, pConfig.Dimensions...)
 
 	dbCallDimensions := []Dimension{
 		{Name: "db.system"},
 		{Name: "db.name"},
 		{Name: "db.operation"},
 	}
-	dbCallDimensions = append(dbCallDimensions, pConfig.Dimensions)
+	dbCallDimensions = append(dbCallDimensions, pConfig.Dimensions...)
 
 	externalCallDimensions := []Dimension{
 		{Name: "http.status_code"},
 		{Name: TagHTTPUrl},
 		{Name: "http.method"},
 	}
-	externalCallDimensions = append(externalCallDimensions, pConfig.Dimensions)
+	externalCallDimensions = append(externalCallDimensions, pConfig.Dimensions...)
 
 	if pConfig.DimensionsCacheSize <= 0 {
 		return nil, fmt.Errorf(
