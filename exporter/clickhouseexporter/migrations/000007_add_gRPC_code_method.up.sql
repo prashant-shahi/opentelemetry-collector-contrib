@@ -1,1 +1,0 @@
-ALTER TABLE signoz_index ADD COLUMN IF NOT EXISTS gRPCMethod LowCardinality(String) CODEC(ZSTD(1)), ADD COLUMN IF NOT EXISTS gRPCCode LowCardinality(String) CODEC(ZSTD(1))

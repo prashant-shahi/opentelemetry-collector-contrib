@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS signoz_traces.signoz_index_v2 (
   msgSystem LowCardinality(String) CODEC(ZSTD(1)), 
   msgOperation LowCardinality(String) CODEC(ZSTD(1)),
   hasError bool CODEC(T64, ZSTD(1)),
+  gRPCMethod LowCardinality(String) CODEC(ZSTD(1)),
+  gRPCCode LowCardinality(String) CODEC(ZSTD(1)),
   tagMap Map(LowCardinality(String), String) CODEC(ZSTD(1)),
   PROJECTION timestampSort (SELECT * ORDER BY timestamp),
   INDEX idx_service serviceName TYPE bloom_filter GRANULARITY 4,

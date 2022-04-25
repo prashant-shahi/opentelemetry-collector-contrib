@@ -1,1 +1,0 @@
-ALTER TABLE signoz_index ADD COLUMN IF NOT EXISTS tagMap Map(LowCardinality(String), String)
