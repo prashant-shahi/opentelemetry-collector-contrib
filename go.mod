@@ -126,9 +126,9 @@ require (
 	github.com/prometheus/prometheus v1.8.2-0.20220111145625-076109fa1910
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.10.1
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.7.1
 	go.opentelemetry.io/collector v0.44.0
-	go.opentelemetry.io/collector/model v0.44.0
+	go.opentelemetry.io/collector/model v0.50.0
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.20.0
 	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
@@ -213,7 +213,7 @@ require (
 	github.com/eapache/queue v1.1.0 // indirect
 	github.com/elastic/go-elasticsearch/v7 v7.16.0 // indirect
 	github.com/elastic/go-structform v0.0.9 // indirect
-	github.com/envoyproxy/go-control-plane v0.10.1 // indirect
+	github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.2 // indirect
 	github.com/euank/go-kmsg-parser v2.0.0+incompatible // indirect
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
@@ -421,6 +421,7 @@ require (
 	go.etcd.io/bbolt v1.3.6 // indirect
 	go.mongodb.org/atlas v0.14.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
+	go.opentelemetry.io/collector/pdata v0.50.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.28.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.28.0 // indirect
 	go.opentelemetry.io/contrib/zpages v0.28.0 // indirect
@@ -448,8 +449,8 @@ require (
 	google.golang.org/api v0.65.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20220111164026-67b88f271998 // indirect
-	google.golang.org/grpc v1.44.0 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	google.golang.org/grpc v1.46.0 // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/DataDog/dd-trace-go.v1 v1.35.0 // indirect
 	gopkg.in/alexcesaro/statsd.v2 v2.0.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
