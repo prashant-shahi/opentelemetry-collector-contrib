@@ -12,7 +12,7 @@ require (
 	go.uber.org/zap v1.20.0
 )
 
-require go.uber.org/multierr v1.7.0
+require go.uber.org/multierr v1.8.0
 
 require (
 	github.com/Microsoft/go-winio v0.4.17 // indirect
