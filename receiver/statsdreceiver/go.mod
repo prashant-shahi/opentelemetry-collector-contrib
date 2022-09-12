@@ -11,7 +11,7 @@ require (
 	go.opentelemetry.io/otel v1.3.0
 	go.uber.org/multierr v1.7.0
 	go.uber.org/zap v1.20.0
-	gonum.org/v1/gonum v0.9.3
+	gonum.org/v1/gonum v0.12.0
 )
 
 require (
