@@ -18,7 +18,7 @@ require (
 	go.opentelemetry.io/collector v0.43.1
 	go.opentelemetry.io/collector/model v0.43.1
 	go.uber.org/zap v1.20.0
-	gopkg.in/DataDog/dd-trace-go.v1 v1.35.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.42.1
 	gopkg.in/zorkian/go-datadog-api.v2 v2.30.0
 )
 
@@ -57,7 +57,7 @@ require (
 	go.opentelemetry.io/otel/metric v0.26.0 // indirect
 	go.opentelemetry.io/otel/trace v1.3.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/sys v0.0.0-20211205182925-97ca703d548d // indirect
+	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
