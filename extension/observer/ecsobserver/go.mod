@@ -10,7 +10,7 @@ require (
 	go.opentelemetry.io/collector/confmap v0.84.0
 	go.opentelemetry.io/collector/extension v0.84.0
 	go.uber.org/multierr v1.11.0
-	go.uber.org/zap v1.25.0
+	go.uber.org/zap v1.26.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
