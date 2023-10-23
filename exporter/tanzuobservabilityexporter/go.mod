@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/coreinternal v0.84.0
 	github.com/stretchr/testify v1.8.4
-	github.com/wavefronthq/wavefront-sdk-go v0.14.0
+	github.com/wavefronthq/wavefront-sdk-go v0.15.0
 	go.opentelemetry.io/collector v0.84.0
 	go.opentelemetry.io/collector/component v0.84.0
 	go.opentelemetry.io/collector/config/confighttp v0.84.0
