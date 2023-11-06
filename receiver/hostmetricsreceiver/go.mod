@@ -3,10 +3,10 @@ module github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostme
 go 1.20
 
 require (
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/leoluk/perflib_exporter v0.2.1
 	github.com/open-telemetry/opentelemetry-collector-contrib/internal/filter v0.84.0
-	github.com/shirou/gopsutil/v3 v3.23.8
+	github.com/shirou/gopsutil/v3 v3.23.10
 	github.com/stretchr/testify v1.8.4
 	github.com/yusufpapurcu/wmi v1.2.3
 	go.opentelemetry.io/collector v0.84.0
@@ -18,7 +18,7 @@ require (
 	go.opentelemetry.io/collector/semconv v0.84.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.25.0
-	golang.org/x/sys v0.12.0
+	golang.org/x/sys v0.13.0
 )
 
 require (
